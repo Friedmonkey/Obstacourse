@@ -4,20 +4,34 @@
 #include <iostream>
 #include "Settings.h"
 #include "Agent.h";
+#include "Wall.h"
 
 int main()
 {
     InitWindow(SW, SH, "Obstacle Course lol");
     SetTargetFPS(60);
 
-    Agent agent = Agent({SW2, SH2});
+    Agent agent = Agent({SW2, SH2}, 60.0f);
+    std::vector<Wall> walls = {
+    Wall({100, 100}, {600, 20}),
+    Wall({100, 500}, {620, 20}),
+    Wall({100, 100}, {20, 400}),
+    Wall({700, 100}, {20, 400})
+    };
 
     while (!WindowShouldClose())
     {
-        agent.Update();
         BeginDrawing();
+
+        agent.Update();
+        agent.CheckCollisionWithWalls(walls);
+
         ClearBackground(RAYWHITE);
+
         agent.Draw();
+        for (auto& wall : walls) {
+            wall.Draw();
+        }
 
         EndDrawing();
     }
