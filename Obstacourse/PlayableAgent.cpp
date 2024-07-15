@@ -75,65 +75,49 @@ void Agent::CheckCollisionWithWalls(std::vector<Wall> &walls)
     }
 }
 
-void Agent::ResolveCollision(Wall& wall, Vector2 collisionPoint) {
+void Agent::ResolveCollision(Wall& wall, Vector2 collisionPoint) 
+{
+    // Get the rectangle of the wall
     Rectangle rect = wall.GetRectangle();
 
-    // Determine the closest side of the rectangle
+    // Determine the distances from the collision point to each side of the wall
     float leftDist = collisionPoint.x - rect.x;
     float rightDist = (rect.x + rect.width) - collisionPoint.x;
     float topDist = collisionPoint.y - rect.y;
     float bottomDist = (rect.y + rect.height) - collisionPoint.y;
 
-    // Find the minimum distance
-    float minDist = fmin(fmin(leftDist, rightDist), fmin(topDist, bottomDist));
+    // Find the minimum distance to each side
+    float minDistX = fmin(leftDist, rightDist);
+    float minDistY = fmin(topDist, bottomDist);
 
     // Adjust the position based on the minimum distance side
-    if (minDist == leftDist) {
-        position.x -= leftDist;  // Move left
-    }
-    else if (minDist == rightDist) {
-        position.x += rightDist;  // Move right
-    }
-    else if (minDist == topDist) {
-        position.y -= topDist;  // Move up
-    }
-    else if (minDist == bottomDist) {
-        position.y += bottomDist;  // Move down
-    }
-
-    // To simulate sliding along the wall, ensure the agent cannot move further into the wall
-    // Adjust position along the direction perpendicular to the collision normal
-    if (minDist == leftDist || minDist == rightDist) {
-        // Sliding vertically
-        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
-            Vector2 localP1 = { 0, -moveSpeed };
-            float rad = direction * DEG2RAD;
-            Vector2 rotatedP1 = Vector2Rotate(localP1, rad);
-
-            if (IsKeyDown(KEY_UP)) {
-                position = Vector2Add(position, rotatedP1);
-            }
-            else {
-                position = Vector2Subtract(position, rotatedP1);
-            }
+    if (minDistX < minDistY) //if the x distance is closer
+    { //handle x
+        // Horizontal collision (left or right)
+        if (minDistX == leftDist) // did we hit a right wall
+        {
+            position.x -= leftDist;  // Move left by the distance to the left side
+        }
+        else //did we hit a left wall
+        {
+            position.x += rightDist;  // Move right by the distance to the right side
         }
     }
-    else if (minDist == topDist || minDist == bottomDist) {
-        // Sliding horizontally
-        if (IsKeyDown(KEY_LEFT)) {
-            direction -= rotateSpeed;
-            if (direction < 0) {
-                direction = 360.0f - fabsf(direction);
-            }
+    else //if the y distance is closer
+    { //handle y
+        // Vertical collision (top or bottom)
+        if (minDistY == topDist) //did we hit a bottom wall
+        {
+            position.y -= topDist;  // Move up by the distance to the top side
         }
-        else if (IsKeyDown(KEY_RIGHT)) {
-            direction += rotateSpeed;
-            if (direction > 360.0f) {
-                direction = direction - 360.0f;
-            }
+        else //did we hit a top wall
+        {
+            position.y += bottomDist;  // Move down by the distance to the bottom side
         }
     }
 }
+
+
 
 
 void Agent::GetTriangle(Vector2* p1, Vector2* p2, Vector2* p3)
