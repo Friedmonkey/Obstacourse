@@ -11,7 +11,6 @@
 
 #define PhysicsWorldScale 8
 
-
 #define ConvertToBox(vector) b2Vec2(vector.x, vector.y)
 #define ConvertToRay(vector) Vector2{vector.x, vector.y}
 

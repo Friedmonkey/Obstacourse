@@ -16,6 +16,8 @@ void Game::Draw()
 {
 	agent->Draw();
 
+	//world.get()->DebugDraw();
+
 	for (auto& wall : walls) {
 		wall.Draw();
 	}

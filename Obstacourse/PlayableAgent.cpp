@@ -1,14 +1,17 @@
 #include "Agent.h"
 #include <RayMath.h>
+#include <iostream>
 
-void Agent::Initialize(b2World* pWorld, Vector2 pos)
+void Agent::Initialize(b2World* pWorld, Vector2 posScaled)
 {
+    Vector2 pos { posScaled.x / PhysicsWorldScale, posScaled.y / PhysicsWorldScale };
+
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
     bodyDef.position.Set(pos.x, pos.y);
 
-    bodyDef.angularDamping = 5.0f;
-    bodyDef.linearDamping = 4.0f;
+    bodyDef.angularDamping =    4.0f;
+    bodyDef.linearDamping =     4.0f;
 
     this->body = pWorld->CreateBody(&bodyDef);
 
@@ -17,6 +20,12 @@ void Agent::Initialize(b2World* pWorld, Vector2 pos)
     p1 = Vector2Subtract(pos, p1);
     p2 = Vector2Subtract(pos, p2);
     p3 = Vector2Subtract(pos, p3);
+
+    float multipleScale = 1.0f / PhysicsWorldScale;
+
+    p1 = Vector2Scale(p1, multipleScale);
+    p2 = Vector2Scale(p2, multipleScale);
+    p3 = Vector2Scale(p3, multipleScale);
 
     b2Vec2 points[3] 
     {
@@ -31,10 +40,14 @@ void Agent::Initialize(b2World* pWorld, Vector2 pos)
 
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &dynamicBox;
-    fixtureDef.density = 1.0f;
-    fixtureDef.friction = 10.0f;
+    fixtureDef.density = 2.5f;
+    fixtureDef.friction = 0.2f;
 
     body->CreateFixture(&fixtureDef);
+
+    // Debug output for mass
+    float mass = body->GetMass();
+    std::cout << "Body mass: " << mass << std::endl;
 }
 
 void Agent::Draw()
@@ -44,6 +57,7 @@ void Agent::Draw()
 	DrawTriangle(p1,p2,p3, CORNFLOWERBLUE);
 
     b2Vec2 pos = body->GetPosition();
+    //Vector2 position = Vector2Scale(ConvertToRay(pos), PhysicsWorldScale);
     DrawCircleV(ConvertToRay(pos), size * 0.1f, RED);
 }
 
@@ -52,27 +66,30 @@ void Agent::Update()
 
     if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN))
     {
-        float rad = body->GetAngle();
         Vector2 pos = ConvertToRay(body->GetPosition());
 
+        float rad = body->GetAngle();
 
         Vector2 imp = { 0, moveSpeed };
+        Vector2 impulse = Vector2Rotate(imp, rad);
 
+
+        b2Vec2 lVelocity = body->GetLinearVelocity();
+        Vector2 linVelocity = ConvertToRay(lVelocity);
+
+        Vector2 newVelocity;
         if (IsKeyDown(KEY_UP))
         {
-            imp.y = -moveSpeed;
+            newVelocity = Vector2Subtract(linVelocity, impulse);
+        }
+        else
+        {
+            newVelocity = Vector2Add(linVelocity, impulse);
         }
 
+        newVelocity = Vector2Lerp(linVelocity, newVelocity, GetFrameTime());
 
-        Vector2 impu = Vector2Rotate(imp, rad);
-        b2Vec2 impulse = ConvertToBox(impu);
-
-        //float angle = atan2f(pos.y - impulse.y, pos.x - impulse.x);
-
-        //float newX = -cosf(angle) * moveSpeed;
-        //float newY = -sinf(angle) * moveSpeed;
-
-        body->ApplyForceToCenter(impulse, true); //b2Vec2(newX, newY)
+        body->SetLinearVelocity(ConvertToBox(newVelocity));
         
     }
 
