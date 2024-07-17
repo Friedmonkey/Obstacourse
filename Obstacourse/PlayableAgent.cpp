@@ -7,7 +7,7 @@ void Agent::Initialize(b2World* pWorld, Vector2 pos)
     bodyDef.type = b2_dynamicBody;
     bodyDef.position.Set(pos.x, pos.y);
 
-    bodyDef.angularDamping = 0.95f;
+    bodyDef.angularDamping = 5.0f;
 
     this->body = pWorld->CreateBody(&bodyDef);
 
@@ -52,23 +52,59 @@ void Agent::Update()
     if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN))
     {
         float rad = body->GetAngularVelocity();
+        Vector2 pos = ConvertToRay(body->GetPosition());
 
-        Vector2 imp = { 0, -moveSpeed };
-        b2Vec2 impulse = ConvertToBox(Vector2Rotate(imp, rad));
 
-        Vector2 pnt = { 0, moveSpeed };
-        b2Vec2 point = ConvertToBox(Vector2Rotate(pnt, rad));
+        Vector2 imp = { 0, moveSpeed };
 
         if (IsKeyDown(KEY_UP))
         {
-            body->ApplyLinearImpulse(impulse, point, false);
-            //position = Vector2Add(position, rotatedP1);
+            imp.y = -moveSpeed;
         }
-        else
-        {
-            body->ApplyLinearImpulse(point, impulse, false);
-            //position = Vector2Subtract(position, rotatedP1);
-        }
+
+
+        Vector2 impu = Vector2Rotate(imp, rad);
+        b2Vec2 impulse = ConvertToBox(impu);
+
+        //Vector2 poi = { 0, moveSpeed };
+        //Vector2 poin = Vector2Rotate(poi, rad);
+        //b2Vec2 point = ConvertToBox(poin);
+
+        float angle = atan2f(pos.y - impulse.y, pos.x - impulse.x);
+
+        float newX = -cosf(angle) * moveSpeed;
+        float newY = -sinf(angle) * moveSpeed;
+
+        body->ApplyForceToCenter(b2Vec2(newX, newY), true);
+        //impu = Vector2Add(pos, impu);
+        //poin = Vector2Add(pos, poin);
+
+        //DrawCircleV(poin, size * 2.5f, PURPLE);
+        //DrawCircleV(impu, size * 2.5f, PURPLE);
+
+
+        //if (IsKeyDown(KEY_UP))
+        //{
+        //    body->ApplyLinearImpulse(impulse, point, true);
+        //    //position = Vector2Add(position, rotatedP1);
+
+        //    impu = Vector2Add(pos, impu);
+        //    poin = Vector2Add(pos, poin);
+
+        //    DrawCircleV(impu, size * 0.5f, GREEN);
+        //    DrawCircleV(poin, size * 0.5f, BLUE);
+        //}
+        //else
+        //{
+        //    body->ApplyLinearImpulse(point, impulse, true);
+
+        //    impu = Vector2Add(pos, impu);
+        //    poin = Vector2Add(pos, poin);
+
+        //    DrawCircleV(poin, size * 0.5f, GREEN);
+        //    DrawCircleV(impu, size * 0.5f, BLUE);
+        //    //position = Vector2Subtract(position, rotatedP1);
+        //}
     }
 
     if (IsKeyDown(KEY_LEFT))

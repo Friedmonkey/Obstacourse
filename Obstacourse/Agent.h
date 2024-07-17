@@ -27,7 +27,7 @@ private:
 	b2Body* body{};
 
 	float size = 60;
-	float moveSpeed = 5.0f;
-	float rotateSpeed = 250000.0f;
+	float moveSpeed = 500000.0f;
+	float rotateSpeed = 300000.0f;
 };
 
