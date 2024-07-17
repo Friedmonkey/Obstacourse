@@ -14,7 +14,6 @@ public:
 
 	void Draw();
 	void Update();
-	void CheckCollisionWithWalls(std::vector<Wall> &walls);
 
 protected:
 	void GetTriangle(Vector2 *p1, Vector2 *p2, Vector2 *p3);
@@ -22,12 +21,11 @@ protected:
 private:
 	void RotateLeft(float amount);
 	void RotateRight(float amount);
-	void ResolveCollision(Wall& wall, Vector2 position);
 
 	b2Body* body{};
 
 	float size = 60;
-	float moveSpeed = 500000.0f;
-	float rotateSpeed = 300000.0f;
+	float moveSpeed		{500000000.0f};
+	float rotateSpeed	{300000.0f};
 };
 
