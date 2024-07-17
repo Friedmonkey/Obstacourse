@@ -5,11 +5,11 @@ std::unique_ptr<b2World> Game::world = nullptr;
 
 Game::Game()
 {
-	b2Vec2 gravity = b2Vec2(0.0f, 5.0f);
+	b2Vec2 gravity = b2Vec2(0.0f, 0.1f);
 	world = std::make_unique<b2World>(gravity);
-	agent = std::make_unique<Agent>(Vector2 { SW2, SH2 }, 60.0f);
+	agent = std::make_unique<Agent>();
 
-	agent->Initialize(world.get());
+	agent->Initialize(world.get(), Vector2{ SW2, SH2 });
 }
 
 void Game::Draw()

@@ -10,10 +10,7 @@
 class Agent
 {
 public:
-	Agent();
-	Agent(Vector2 pos, float size = 120);
-
-	void Initialize(b2World *pWorld);
+	void Initialize(b2World *pWorld, Vector2 pos);
 
 	void Draw();
 	void Update();
@@ -26,13 +23,11 @@ private:
 	void RotateLeft(float amount);
 	void RotateRight(float amount);
 	void ResolveCollision(Wall& wall, Vector2 position);
-	Vector2 position;
 
 	b2Body* body{};
 
-	float direction = 90;
-	float size = 120;
+	float size = 60;
 	float moveSpeed = 5.0f;
-	float rotateSpeed = 2.5f;
+	float rotateSpeed = 250000.0f;
 };
 

@@ -1,30 +1,21 @@
 #include "Agent.h"
 #include <RayMath.h>
 
-Agent::Agent() : Agent({0.0f , 0.0f}) {}
-Agent::Agent(Vector2 pos, float size)
-{
-    position.x = pos.x;
-    position.y = pos.y;
-
-    this->size = size;
-    this->moveSpeed = size / 12;
-    this->rotateSpeed = size / 24;
-}
-
-void Agent::Initialize(b2World* pWorld)
+void Agent::Initialize(b2World* pWorld, Vector2 pos)
 {
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
-    bodyDef.position.Set(position.x, position.y);
+    bodyDef.position.Set(pos.x, pos.y);
+
+    bodyDef.angularDamping = 0.95f;
 
     this->body = pWorld->CreateBody(&bodyDef);
 
     Vector2 p1,p2,p3;
     GetTriangle(&p1,&p2,&p3);
-    p1 = Vector2Subtract(position, p1);
-    p2 = Vector2Subtract(position, p2);
-    p3 = Vector2Subtract(position, p3);
+    p1 = Vector2Subtract(pos, p1);
+    p2 = Vector2Subtract(pos, p2);
+    p3 = Vector2Subtract(pos, p3);
 
     b2Vec2 points[3] 
     {
@@ -60,17 +51,23 @@ void Agent::Update()
 
     if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN))
     {
-        Vector2 localP1 = { 0, -moveSpeed };
-        float rad = direction * DEG2RAD;
-        Vector2 rotatedP1 = Vector2Rotate(localP1, rad);
+        float rad = body->GetAngularVelocity();
+
+        Vector2 imp = { 0, -moveSpeed };
+        b2Vec2 impulse = ConvertToBox(Vector2Rotate(imp, rad));
+
+        Vector2 pnt = { 0, moveSpeed };
+        b2Vec2 point = ConvertToBox(Vector2Rotate(pnt, rad));
 
         if (IsKeyDown(KEY_UP))
         {
-            position = Vector2Add(position, rotatedP1);
+            body->ApplyLinearImpulse(impulse, point, false);
+            //position = Vector2Add(position, rotatedP1);
         }
         else
         {
-            position = Vector2Subtract(position, rotatedP1);
+            body->ApplyLinearImpulse(point, impulse, false);
+            //position = Vector2Subtract(position, rotatedP1);
         }
     }
 
@@ -88,8 +85,7 @@ void Agent::Update()
 
 void Agent::RotateLeft(float amount)
 {
-    amount*=1000;
-    body->ApplyAngularImpulse(-amount, true);
+    body->ApplyAngularImpulse(-amount, false);
     //body->ApplyAngularImpulse((amount*100 * DEG2RAD), false);
     //direction -= amount;
     //if (direction < 0)
@@ -100,7 +96,6 @@ void Agent::RotateLeft(float amount)
 
 void Agent::RotateRight(float amount)
 {
-    amount *= 1000;
     body->ApplyAngularImpulse(amount, false);
 
     //body->ApplyAngularImpulse(-(amount*100 * DEG2RAD), false);
@@ -131,63 +126,63 @@ void Agent::CheckCollisionWithWalls(std::vector<Wall> &walls)
 
 void Agent::ResolveCollision(Wall& wall, Vector2 collisionPoint) 
 {
-    // Get the rectangle of the wall
-    Rectangle rect = wall.GetRectangle();
+    //// Get the rectangle of the wall
+    //Rectangle rect = wall.GetRectangle();
 
-    // Determine the distances from the collision point to each side of the wall
-    float leftDist = collisionPoint.x - rect.x;
-    float rightDist = (rect.x + rect.width) - collisionPoint.x;
-    float topDist = collisionPoint.y - rect.y;
-    float bottomDist = (rect.y + rect.height) - collisionPoint.y;
+    //// Determine the distances from the collision point to each side of the wall
+    //float leftDist = collisionPoint.x - rect.x;
+    //float rightDist = (rect.x + rect.width) - collisionPoint.x;
+    //float topDist = collisionPoint.y - rect.y;
+    //float bottomDist = (rect.y + rect.height) - collisionPoint.y;
 
-    // Find the minimum distance to each side
-    float minDistX = fmin(leftDist, rightDist);
-    float minDistY = fmin(topDist, bottomDist);
+    //// Find the minimum distance to each side
+    //float minDistX = fmin(leftDist, rightDist);
+    //float minDistY = fmin(topDist, bottomDist);
 
-    float buffer = 2;
+    //float buffer = 2;
 
-    // Adjust the position based on the minimum distance side
-    if (minDistX < minDistY) //if the x distance is closer
-    { //handle x
-        // Horizontal collision (left or right)
-        if (minDistX == leftDist) // did we hit a right wall
-        {
-            position.x -= leftDist+buffer;  // Move left by the distance to the left side
-            if (direction > 90)
-                RotateRight(minDistX);
-            else
-                RotateLeft(minDistX);
-        }
-        else //did we hit a left wall
-        {
-            position.x += rightDist;  // Move right by the distance to the right side
-            //RotateLeft(rightDist);
-            if (direction > 90)
-                RotateLeft(minDistX);
-            else
-                RotateRight(minDistX);
-        }
-    }
-    else //if the y distance is closer
-    { //handle y
-        // Vertical collision (top or bottom)
-        if (minDistY == topDist) //did we hit a bottom wall
-        {
-            position.y -= topDist;  // Move up by the distance to the top side
-            if (direction < 180)
-                RotateLeft(minDistY);
-            else
-                RotateRight(minDistY);
-        }
-        else //did we hit a top wall
-        {
-            position.y += bottomDist;  // Move down by the distance to the bottom side
-            if (direction < 180)
-                RotateRight(minDistY);
-            else
-                RotateLeft(minDistY);
-        }
-    }
+    //// Adjust the position based on the minimum distance side
+    //if (minDistX < minDistY) //if the x distance is closer
+    //{ //handle x
+    //    // Horizontal collision (left or right)
+    //    if (minDistX == leftDist) // did we hit a right wall
+    //    {
+    //        position.x -= leftDist+buffer;  // Move left by the distance to the left side
+    //        if (direction > 90)
+    //            RotateRight(minDistX);
+    //        else
+    //            RotateLeft(minDistX);
+    //    }
+    //    else //did we hit a left wall
+    //    {
+    //        position.x += rightDist;  // Move right by the distance to the right side
+    //        //RotateLeft(rightDist);
+    //        if (direction > 90)
+    //            RotateLeft(minDistX);
+    //        else
+    //            RotateRight(minDistX);
+    //    }
+    //}
+    //else //if the y distance is closer
+    //{ //handle y
+    //    // Vertical collision (top or bottom)
+    //    if (minDistY == topDist) //did we hit a bottom wall
+    //    {
+    //        position.y -= topDist;  // Move up by the distance to the top side
+    //        if (direction < 180)
+    //            RotateLeft(minDistY);
+    //        else
+    //            RotateRight(minDistY);
+    //    }
+    //    else //did we hit a top wall
+    //    {
+    //        position.y += bottomDist;  // Move down by the distance to the bottom side
+    //        if (direction < 180)
+    //            RotateRight(minDistY);
+    //        else
+    //            RotateLeft(minDistY);
+    //    }
+    //}
 }
 
 
