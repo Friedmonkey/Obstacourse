@@ -3,40 +3,34 @@
 
 #include <iostream>
 #include "Settings.h"
-#include "Agent.h";
-#include "Wall.h"
+#include "Game.h";
 
 int main()
 {
     InitWindow(SW, SH, "Obstacle Course lol");
     SetTargetFPS(60);
 
-    Agent agent = Agent({SW2, SH2}, 60.0f);
-    std::vector<Wall> walls = {
-    Wall({100, 100}, {600, 20}),
-    Wall({100, 500}, {620, 20}),
-    Wall({100, 100}, {20, 400}),
-    Wall({700, 100}, {20, 400})
-    };
+    Game game = Game();
+
+    //game.BuildLevel1();
 
     while (!WindowShouldClose())
     {
         BeginDrawing();
 
-        agent.Update();
-        agent.CheckCollisionWithWalls(walls);
+        game.Update();
+        //agent.CheckCollisionWithWalls(walls);
 
         ClearBackground(RAYWHITE);
 
-        agent.Draw();
-        for (auto& wall : walls) {
-            wall.Draw();
-        }
+        game.Draw();
 
         EndDrawing();
     }
 
     CloseWindow();
+
+    return 0;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

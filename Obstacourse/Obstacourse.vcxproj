@@ -127,12 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="Obstacourse.cpp" />
     <ClCompile Include="PlayableAgent.cpp" />
     <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Agent.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Wall.h" />
   </ItemGroup>

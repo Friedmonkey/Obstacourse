@@ -1,6 +1,7 @@
 #include "Agent.h"
 #include <RayMath.h>
 
+Agent::Agent() : Agent({0.0f , 0.0f}) {}
 Agent::Agent(Vector2 pos, float size)
 {
     position.x = pos.x;
@@ -11,12 +12,47 @@ Agent::Agent(Vector2 pos, float size)
     this->rotateSpeed = size / 24;
 }
 
+void Agent::Initialize(b2World* pWorld)
+{
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position.Set(position.x, position.y);
+
+    this->body = pWorld->CreateBody(&bodyDef);
+
+    Vector2 p1,p2,p3;
+    GetTriangle(&p1,&p2,&p3);
+    p1 = Vector2Subtract(position, p1);
+    p2 = Vector2Subtract(position, p2);
+    p3 = Vector2Subtract(position, p3);
+
+    b2Vec2 points[3] 
+    {
+        ConvertToBox(p1),
+        ConvertToBox(p2),
+        ConvertToBox(p3),
+    };
+
+    b2PolygonShape dynamicBox;
+    dynamicBox.Set(points, 3);
+    //dynamicBox.SetAsBox(0.9, 1);
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &dynamicBox;
+    fixtureDef.density = 1.0f;
+    fixtureDef.friction = 10.0f;
+
+    body->CreateFixture(&fixtureDef);
+}
+
 void Agent::Draw()
 {
 	Vector2 p1, p2, p3;
 	GetTriangle(&p1, &p2, &p3);
 	DrawTriangle(p1,p2,p3, CORNFLOWERBLUE);
-    DrawCircleV(position, size*0.1f, RED);
+
+    b2Vec2 pos = body->GetPosition();
+    DrawCircleV(ConvertToRay(pos), size * 0.1f, RED);
 }
 
 void Agent::Update()
@@ -40,22 +76,40 @@ void Agent::Update()
 
     if (IsKeyDown(KEY_LEFT))
     {
-        direction -= rotateSpeed;
-        if (direction < 0)
-        {
-            direction = 360.0f - fabsf(direction);
-        }
+        RotateLeft(rotateSpeed);
     }
     else if (IsKeyDown(KEY_RIGHT))
     {
-        direction += rotateSpeed;
-        if (direction > 360.0f)
-        {
-            direction = direction - 360.0f;
-        }
+        RotateRight(rotateSpeed);
     }
     //direction += 20.0f * GetFrameTime();
     //if (direction > 360.0f) direction -= 360.0f; // Wrap around the rotation value
+}
+
+void Agent::RotateLeft(float amount)
+{
+    amount*=1000;
+    body->ApplyAngularImpulse(-amount, true);
+    //body->ApplyAngularImpulse((amount*100 * DEG2RAD), false);
+    //direction -= amount;
+    //if (direction < 0)
+    //{
+    //    direction = 360.0f - fabsf(direction);
+    //}
+}
+
+void Agent::RotateRight(float amount)
+{
+    amount *= 1000;
+    body->ApplyAngularImpulse(amount, false);
+
+    //body->ApplyAngularImpulse(-(amount*100 * DEG2RAD), false);
+
+    //direction += amount;
+    //if (direction > 360.0f)
+    //{
+    //    direction = direction - 360.0f;
+    //}
 }
 
 
@@ -90,17 +144,28 @@ void Agent::ResolveCollision(Wall& wall, Vector2 collisionPoint)
     float minDistX = fmin(leftDist, rightDist);
     float minDistY = fmin(topDist, bottomDist);
 
+    float buffer = 2;
+
     // Adjust the position based on the minimum distance side
     if (minDistX < minDistY) //if the x distance is closer
     { //handle x
         // Horizontal collision (left or right)
         if (minDistX == leftDist) // did we hit a right wall
         {
-            position.x -= leftDist;  // Move left by the distance to the left side
+            position.x -= leftDist+buffer;  // Move left by the distance to the left side
+            if (direction > 90)
+                RotateRight(minDistX);
+            else
+                RotateLeft(minDistX);
         }
         else //did we hit a left wall
         {
             position.x += rightDist;  // Move right by the distance to the right side
+            //RotateLeft(rightDist);
+            if (direction > 90)
+                RotateLeft(minDistX);
+            else
+                RotateRight(minDistX);
         }
     }
     else //if the y distance is closer
@@ -109,10 +174,18 @@ void Agent::ResolveCollision(Wall& wall, Vector2 collisionPoint)
         if (minDistY == topDist) //did we hit a bottom wall
         {
             position.y -= topDist;  // Move up by the distance to the top side
+            if (direction < 180)
+                RotateLeft(minDistY);
+            else
+                RotateRight(minDistY);
         }
         else //did we hit a top wall
         {
             position.y += bottomDist;  // Move down by the distance to the bottom side
+            if (direction < 180)
+                RotateRight(minDistY);
+            else
+                RotateLeft(minDistY);
         }
     }
 }
@@ -131,10 +204,14 @@ void Agent::GetTriangle(Vector2* p1, Vector2* p2, Vector2* p3)
     Vector2 localP3 = { size / 2, halfHeight / 2 };
 
     // Rotate points by direction
-    float rad = direction * DEG2RAD;
+    //float rad = direction * DEG2RAD;
+    float rad = body->GetAngle();
     Vector2 rotatedP1 = Vector2Rotate(localP1, rad);
     Vector2 rotatedP2 = Vector2Rotate(localP2, rad);
     Vector2 rotatedP3 = Vector2Rotate(localP3, rad);
+
+    b2Vec2 pos = body->GetPosition();
+    Vector2 position = ConvertToRay(pos);
 
     // Translate points to the agent's position
     *p1 = Vector2Add(position, rotatedP1);
